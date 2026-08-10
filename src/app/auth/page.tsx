@@ -54,13 +54,19 @@ export default function AuthPage({ searchParams }: { searchParams: { mode?: stri
     }
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      // Supabase 환경 변수 확인
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase 환경 변수가 설정되지 않았습니다. 관리자에게 문의하세요.')
+      }
+
+      const { error: signUpError, data } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: {
           data: {
             name: form.name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
@@ -68,8 +74,20 @@ export default function AuthPage({ searchParams }: { searchParams: { mode?: stri
 
       setSuccess(true)
       setForm({ email: '', password: '', name: '', passwordConfirm: '' })
+
+      // 프로필 생성
+      if (data.user) {
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          email: form.email,
+          name: form.name,
+        })
+
+        if (profileError) console.error('프로필 생성 실패:', profileError)
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '가입 중 오류가 발생했습니다.'
+      console.error('회원가입 에러:', err)
       setError(message)
     } finally {
       setLoading(false)
