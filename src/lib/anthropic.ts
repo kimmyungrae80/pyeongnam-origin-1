@@ -1,16 +1,24 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// 서버사이드에서만 사용 - API 키 보호
-if (!process.env.ANTHROPIC_API_KEY) {
-  throw new Error(
-    "ANTHROPIC_API_KEY 환경 변수가 설정되지 않았습니다. " +
-    ".env.local 또는 Vercel 환경 변수를 확인하세요."
-  );
-}
+// Anthropic 클라이언트 생성 (lazy initialization)
+let client: Anthropic | null = null;
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+function getClient(): Anthropic {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error(
+      "ANTHROPIC_API_KEY 환경 변수가 설정되지 않았습니다. " +
+      ".env.local 또는 Vercel 환경 변수를 확인하세요."
+    );
+  }
+
+  if (!client) {
+    client = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+  }
+
+  return client;
+}
 
 /**
  * Claude API를 통해 텍스트 생성
@@ -25,6 +33,7 @@ export async function generateWithClaude(
   maxTokens: number = 1024
 ): Promise<string> {
   try {
+    const client = getClient();
     const message = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
