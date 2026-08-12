@@ -74,19 +74,15 @@ function AuthForm() {
 
       if (signUpError) throw signUpError
 
+      // DB 트리거가 프로필을 생성합니다. 이메일 확인이 생략된 환경이면 바로 시작합니다.
+      if (data.session) {
+        router.push('/onboarding')
+        router.refresh()
+        return
+      }
+
       setSuccess(true)
       setForm({ email: '', password: '', name: '', passwordConfirm: '' })
-
-      // 프로필 생성
-      if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: data.user.id,
-          email: form.email,
-          name: form.name,
-        })
-
-        if (profileError) console.error('프로필 생성 실패:', profileError)
-      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '가입 중 오류가 발생했습니다.'
       console.error('회원가입 에러:', err)
