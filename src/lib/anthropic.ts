@@ -35,7 +35,7 @@ export async function generateWithClaude(
   try {
     const client = getClient();
     const message = await client.messages.create({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5",
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: [
