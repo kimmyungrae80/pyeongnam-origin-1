@@ -6,7 +6,14 @@ interface GenerateDraftRequest {
   interviewContent: string
   relationship: string
   tone?: string
+  length?: 'balanced' | 'detailed' | 'archive'
 }
+
+const LENGTH_SETTINGS = {
+  balanced: { label: '원문과 비슷한 분량', ratio: 1, min: 800, max: 2200 },
+  detailed: { label: '원문보다 풍부한 분량', ratio: 1.3, min: 1200, max: 3500 },
+  archive: { label: '빠짐없이 자세한 기록문', ratio: 1.6, min: 1800, max: 5000 },
+} as const
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,8 +27,15 @@ export async function POST(request: NextRequest) {
     }
 
     const tone = body.tone || '따뜻하고 회상적인'
+    const lengthMode = body.length && body.length in LENGTH_SETTINGS ? body.length : 'detailed'
+    const lengthSetting = LENGTH_SETTINGS[lengthMode]
+    const sourceLength = body.interviewContent.trim().length
+    const targetLength = Math.min(
+      lengthSetting.max,
+      Math.max(lengthSetting.min, Math.round(sourceLength * lengthSetting.ratio))
+    )
 
-    const userPrompt = `인터뷰 노트를 감동적인 가족 에세이로 변환해주세요.
+    const userPrompt = `인터뷰 노트를 사실에 충실한 풍부한 가족 이야기로 다듬어주세요.
 
 제목: ${body.title}
 관계: ${body.relationship}
@@ -30,11 +44,14 @@ export async function POST(request: NextRequest) {
 ${body.interviewContent}
 
 요청사항:
-1. 자연스러운 스토리 형식으로 재구성
-2. 톤: ${tone}
-3. 3-4개의 문단 (각 150-200자)
-4. 개인 감정과 추억을 섬세하게 담기
-5. 평안남도의 문화적 배경 살리기
+1. 인터뷰에 나온 인명, 지명, 연도, 사건, 관계, 순서와 구체적인 기억을 빠뜨리지 말 것
+2. 인터뷰에 없는 사실, 대화, 감정, 장면을 새로 만들거나 사실처럼 단정하지 말 것
+3. 요약문이 아니라 처음부터 끝까지 자연스럽게 읽히는 가족 이야기로 재구성할 것
+4. 원문의 말투와 감정은 살리되 반복되는 표현만 정돈할 것
+5. 톤: ${tone}
+6. 분량: ${lengthSetting.label}, 약 ${targetLength}자 내외. 충분한 문단으로 나누고 지나치게 압축하지 말 것
+7. 평안남도의 문화적 배경은 인터뷰에 언급된 내용만 사실로 사용할 것. 일반적인 시대 배경을 보충해야 한다면 추정임을 명확히 밝힐 것
+8. 이야기 작성 후 보존한 핵심 사실을 별도 목록으로 제시할 것
 
 JSON 형식으로 응답:
 \`\`\`json
@@ -42,18 +59,20 @@ JSON 형식으로 응답:
   "story": "완성된 스토리",
   "summary": "한 문장 요약",
   "emotionalTone": "감정톤",
-  "highlightedPhrases": ["표현1", "표현2"]
+  "highlightedPhrases": ["표현1", "표현2"],
+  "preservedFacts": ["원문에서 보존한 핵심 사실1", "핵심 사실2"]
 }
 \`\`\``
 
     const systemPrompt = `당신은 평안남도 뿌리찾기 프로젝트의 전문 스토리텔러입니다.
-인터뷰 노트를 감동적인 가족 에세이로 변환하는 역할을 합니다.
-평안남도의 역사와 문화를 존중하면서 생생한 서사를 만들어야 합니다.`
+인터뷰의 사실과 기억을 빠짐없이 보존하면서 읽기 좋은 가족 기록으로 다듬는 역할을 합니다.
+창작으로 빈칸을 채우지 마세요. 확인되지 않은 내용은 사실처럼 쓰지 말고, 원문에 없는 정보는 추가하지 마세요.
+평안남도의 역사와 문화를 존중하되 정확성을 감성적 표현보다 우선해야 합니다.`
 
     const result = await generateWithClaude(
       userPrompt,
       systemPrompt,
-      3000
+      6000
     )
 
     try {
@@ -67,6 +86,7 @@ JSON 형식으로 응답:
         summary: parsedResult.summary,
         emotionalTone: parsedResult.emotionalTone,
         highlightedPhrases: parsedResult.highlightedPhrases,
+        preservedFacts: parsedResult.preservedFacts || [],
       })
     } catch {
       return NextResponse.json({
@@ -75,6 +95,7 @@ JSON 형식으로 응답:
         summary: '인터뷰를 기반으로 한 스토리',
         emotionalTone: '감동적',
         highlightedPhrases: [],
+        preservedFacts: [],
       })
     }
   } catch (error) {

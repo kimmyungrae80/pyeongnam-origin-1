@@ -10,19 +10,29 @@ interface Story {
   summary: string
   emotionalTone: string
   highlightedPhrases: string[]
+  preservedFacts: string[]
 }
+
+type StoryLength = 'balanced' | 'detailed' | 'archive'
+
+const TONES = ['따뜻하고 회상적인', '차분하고 명상적인', '생생하고 역동적인', '향수적인', '강인한']
+
+const LENGTH_OPTIONS: { value: StoryLength; label: string; description: string }[] = [
+  { value: 'balanced', label: '자연스럽게', description: '원문과 비슷한 분량' },
+  { value: 'detailed', label: '풍부하게', description: '원문보다 자세하게 · 추천' },
+  { value: 'archive', label: '기록문으로', description: '사실을 빠짐없이 길게' },
+]
 
 export default function StoryGeneratorPage() {
   const [title, setTitle] = useState('')
   const [interviewContent, setInterviewContent] = useState('')
   const [relationship, setRelationship] = useState('조부모')
   const [selectedTone, setSelectedTone] = useState('따뜻하고 회상적인')
+  const [selectedLength, setSelectedLength] = useState<StoryLength>('detailed')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [story, setStory] = useState<Story | null>(null)
   const [copied, setCopied] = useState(false)
-
-  const TONES = ['따뜻하고 회상적인', '차분하고 명상적인', '생생하고 역동적인', '향수적인', '강인한']
 
   const handleGenerateStory = async () => {
     if (!title.trim()) {
@@ -48,6 +58,7 @@ export default function StoryGeneratorPage() {
           interviewContent,
           relationship,
           tone: selectedTone,
+          length: selectedLength,
         }),
       })
 
@@ -119,6 +130,7 @@ export default function StoryGeneratorPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {TONES.map((tone) => (
                       <button
+                        type="button"
                         key={tone}
                         onClick={() => setSelectedTone(tone)}
                         className={`p-2 rounded-lg text-sm transition-all border ${
@@ -128,6 +140,27 @@ export default function StoryGeneratorPage() {
                         }`}
                       >
                         {tone}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="label-base font-medium mb-2">이야기 분량</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {LENGTH_OPTIONS.map((option) => (
+                      <button
+                        type="button"
+                        key={option.value}
+                        onClick={() => setSelectedLength(option.value)}
+                        className={`rounded-lg border p-3 text-left transition-all ${
+                          selectedLength === option.value
+                            ? 'border-purple-600 bg-purple-50 text-purple-900'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        <span className="block text-sm font-bold">{option.label}</span>
+                        <span className="block text-xs mt-1 opacity-75">{option.description}</span>
                       </button>
                     ))}
                   </div>
@@ -150,6 +183,7 @@ export default function StoryGeneratorPage() {
                 )}
 
                 <button
+                  type="button"
                   onClick={handleGenerateStory}
                   disabled={loading}
                   className={`w-full py-3 font-bold rounded-lg transition-all ${
@@ -170,6 +204,7 @@ export default function StoryGeneratorPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="font-bold text-gray-900">📖 생성된 스토리</h2>
                     <button
+                      type="button"
                       onClick={copyToClipboard}
                       className="text-sm px-3 py-1 bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
                     >
@@ -182,11 +217,22 @@ export default function StoryGeneratorPage() {
                     <p className="text-gray-800 text-sm">{story.summary}</p>
                   </div>
 
-                  <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+                  <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-[36rem] overflow-y-auto">
                     <p className="text-gray-900 leading-relaxed text-sm whitespace-pre-wrap">
                       {story.story}
                     </p>
                   </div>
+
+                  {story.preservedFacts?.length > 0 && (
+                    <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-sm font-bold text-green-800 mb-2">✓ 원문에서 보존한 핵심 사실</p>
+                      <ul className="space-y-1 text-sm text-gray-700">
+                        {story.preservedFacts.map((fact, index) => (
+                          <li key={`${fact}-${index}`}>• {fact}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   <button className="w-full mt-4 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">
                     이 스토리 저장하기 →
