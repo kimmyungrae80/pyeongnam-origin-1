@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 요청 데이터
-    const { submission_id, reason } = await request.json()
+    const { submission_id } = await request.json()
 
     if (!submission_id) {
       return NextResponse.json(
@@ -37,17 +37,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 제출물 반려
-    const { error: updateError } = await supabase
-      .from('submissions')
-      .update({
-        status: 'rejected',
-        admin_comment: reason || '',
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', submission_id)
+    const { error: rejectError } = await supabase.rpc('reject_submission', {
+      p_submission_id: submission_id,
+    })
 
-    if (updateError) throw updateError
+    if (rejectError) throw rejectError
 
     return NextResponse.json({
       success: true,

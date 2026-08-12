@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import DashboardHero from '@/components/DashboardHero'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, Mission, Submission } from '@/lib/types'
 

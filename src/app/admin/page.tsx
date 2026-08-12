@@ -1,58 +1,20 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import StorageMonitor from '@/components/StorageMonitor'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 
-export default function AdminPage() {
-  const router = useRouter()
-  const supabase = createClient()
+export default async function AdminPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth')
 
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .maybeSingle()
 
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/auth')
-        return
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (!profile?.is_admin) {
-        router.push('/dashboard')
-        return
-      }
-
-      setIsAdmin(true)
-      setLoading(false)
-    }
-
-    checkAdmin()
-  }, [supabase, router])
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <main className="pt-16 min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-gray-500">로딩 중...</div>
-        </main>
-      </>
-    )
-  }
-
-  if (!isAdmin) {
-    return null
-  }
+  if (!profile?.is_admin) redirect('/dashboard')
 
   return (
     <>

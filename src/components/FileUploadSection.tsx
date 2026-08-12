@@ -30,7 +30,6 @@ export default function FileUploadSection({
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('path', 'submissions')
 
       // 업로드 진행률 시뮬레이션
       const progressInterval = setInterval(() => {
@@ -115,7 +114,7 @@ export default function FileUploadSection({
               영상 (MP4, WebM), 사진 (JPG, PNG), PDF, 텍스트 파일 가능
             </p>
             <p className="text-xs text-gray-400">
-              최대 2GB까지 업로드 가능합니다
+              직접 업로드는 최대 4MB · 큰 영상은 YouTube 링크를 이용해주세요
             </p>
           </label>
 

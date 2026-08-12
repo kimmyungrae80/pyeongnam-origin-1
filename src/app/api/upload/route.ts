@@ -4,22 +4,29 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const path = (formData.get('path') as string) || 'submissions'
+    const contentType = request.headers.get('content-type') ?? ''
+    if (!contentType.includes('multipart/form-data')) {
+      return NextResponse.json(
+        { error: 'multipart/form-data 형식의 파일 요청이 필요합니다.' },
+        { status: 400 }
+      )
+    }
 
-    if (!file) {
+    const formData = await request.formData()
+    const file = formData.get('file')
+
+    if (!(file instanceof File)) {
       return NextResponse.json(
         { error: '파일을 선택해주세요.' },
         { status: 400 }
       )
     }
 
-    // 파일 크기 검증 (2GB까지)
-    const MAX_SIZE = 2 * 1024 * 1024 * 1024 // 2GB
+    // 서버 경유 업로드는 배포 플랫폼 요청 제한보다 작게 유지합니다.
+    const MAX_SIZE = 4 * 1024 * 1024
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: '파일이 너무 큽니다. 2GB 이하여야 합니다.' },
+        { error: '파일이 너무 큽니다. 4MB 이하 파일만 직접 업로드할 수 있습니다.' },
         { status: 400 }
       )
     }
@@ -54,8 +61,10 @@ export async function POST(request: NextRequest) {
 
     // 파일명: 사용자ID_타임스탐프_원본파일명
     const timestamp = Date.now()
-    const filename = `${user.id}_${timestamp}_${file.name}`
-    const filepath = `${path}/${filename}`
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const filename = `${timestamp}_${safeName}`
+    // Storage RLS 정책의 첫 폴더(auth.uid())와 반드시 일치해야 합니다.
+    const filepath = `${user.id}/${filename}`
 
     // Supabase Storage에 업로드
     const { error } = await supabase.storage

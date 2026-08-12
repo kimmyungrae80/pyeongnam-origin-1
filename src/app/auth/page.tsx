@@ -1,15 +1,17 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { createClient } from '@/lib/supabase/client'
 
 type AuthMode = 'login' | 'signup'
 
-export default function AuthPage({ searchParams }: { searchParams: { mode?: string } }) {
-  const mode = (searchParams.mode as AuthMode) || 'login'
+function AuthForm() {
+  const searchParams = useSearchParams()
+  const requestedMode = searchParams.get('mode')
+  const mode: AuthMode = requestedMode === 'signup' ? 'signup' : 'login'
   const router = useRouter()
   const supabase = createClient()
 
@@ -259,5 +261,13 @@ export default function AuthPage({ searchParams }: { searchParams: { mode?: stri
         </div>
       </main>
     </>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50" />}>
+      <AuthForm />
+    </Suspense>
   )
 }

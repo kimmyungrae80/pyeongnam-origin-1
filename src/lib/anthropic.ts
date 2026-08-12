@@ -35,7 +35,7 @@ export async function generateWithClaude(
   try {
     const client = getClient();
     const message = await client.messages.create({
-      model: "claude-sonnet-5",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: [
@@ -82,7 +82,7 @@ export async function generateJSON<T>(
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/);
     const jsonString = jsonMatch ? jsonMatch[1] : response;
     return JSON.parse(jsonString);
-  } catch (error) {
+  } catch {
     console.error("JSON 파싱 오류:", response);
     throw new Error("AI 응답을 파싱할 수 없습니다");
   }
