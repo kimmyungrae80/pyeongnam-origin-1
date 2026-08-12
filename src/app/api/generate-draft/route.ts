@@ -53,16 +53,12 @@ ${body.interviewContent}
 7. 평안남도의 문화적 배경은 인터뷰에 언급된 내용만 사실로 사용할 것. 일반적인 시대 배경을 보충해야 한다면 추정임을 명확히 밝힐 것
 8. 이야기 작성 후 보존한 핵심 사실을 별도 목록으로 제시할 것
 
-JSON 형식으로 응답:
-\`\`\`json
-{
-  "story": "완성된 스토리",
-  "summary": "한 문장 요약",
-  "emotionalTone": "감정톤",
-  "highlightedPhrases": ["표현1", "표현2"],
-  "preservedFacts": ["원문에서 보존한 핵심 사실1", "핵심 사실2"]
-}
-\`\`\``
+아래 태그 형식으로만 응답:
+<story>완성된 스토리</story>
+<summary>한 문장 요약</summary>
+<emotionalTone>감정톤</emotionalTone>
+<highlightedPhrases><phrase>표현1</phrase><phrase>표현2</phrase></highlightedPhrases>
+<preservedFacts><fact>원문에서 보존한 핵심 사실1</fact><fact>핵심 사실2</fact></preservedFacts>`
 
     const systemPrompt = `당신은 평안남도 뿌리찾기 프로젝트의 전문 스토리텔러입니다.
 인터뷰의 사실과 기억을 빠짐없이 보존하면서 읽기 좋은 가족 기록으로 다듬는 역할을 합니다.
@@ -75,20 +71,20 @@ JSON 형식으로 응답:
       6000
     )
 
-    try {
-      const jsonMatch = result.match(/```json\n?([\s\S]*?)\n?```/)
-      const jsonString = jsonMatch ? jsonMatch[1] : result
-      const parsedResult = JSON.parse(jsonString)
+    const getTag = (tag: string) => {
+      const match = result.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))
+      return match?.[1]?.trim() || ''
+    }
+    const getTagList = (container: string, item: string) => {
+      const content = getTag(container)
+      return [...content.matchAll(new RegExp(`<${item}>([\\s\\S]*?)</${item}>`, 'g'))]
+        .map((match) => match[1].trim())
+        .filter(Boolean)
+    }
 
-      return NextResponse.json({
-        success: true,
-        story: parsedResult.story,
-        summary: parsedResult.summary,
-        emotionalTone: parsedResult.emotionalTone,
-        highlightedPhrases: parsedResult.highlightedPhrases,
-        preservedFacts: parsedResult.preservedFacts || [],
-      })
-    } catch {
+    const story = getTag('story')
+
+    if (!story) {
       return NextResponse.json({
         success: true,
         story: result,
@@ -98,6 +94,15 @@ JSON 형식으로 응답:
         preservedFacts: [],
       })
     }
+
+    return NextResponse.json({
+      success: true,
+      story,
+      summary: getTag('summary') || '인터뷰를 기반으로 한 가족 이야기',
+      emotionalTone: getTag('emotionalTone') || tone,
+      highlightedPhrases: getTagList('highlightedPhrases', 'phrase'),
+      preservedFacts: getTagList('preservedFacts', 'fact'),
+    })
   } catch (error) {
     console.error('스토리 생성 오류:', error)
     return NextResponse.json(
