@@ -138,6 +138,36 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* AI 도구 */}
+          <section className="mb-8" aria-labelledby="ai-tools-title">
+            <div className="flex items-end justify-between gap-4 mb-4">
+              <div>
+                <h2 id="ai-tools-title" className="section-title">✨ AI로 더 쉽게 기록하기</h2>
+                <p className="text-sm text-gray-500 mt-1">질문 만들기부터 이야기 정리까지 도와드립니다.</p>
+              </div>
+              <Link href="/ai-tools" className="text-sm font-medium text-purple-700 hover:text-purple-900 whitespace-nowrap">
+                전체 보기 →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Link href="/interview-helper" className="card border-purple-200 hover:shadow-md transition-all">
+                <div className="text-3xl mb-3">🎤</div>
+                <h3 className="font-bold text-gray-900">AI 인터뷰 질문</h3>
+                <p className="text-sm text-gray-500 mt-1">가족에게 여쭤볼 질문을 만들어보세요.</p>
+              </Link>
+              <Link href="/story-generator" className="card border-pink-200 hover:shadow-md transition-all">
+                <div className="text-3xl mb-3">📖</div>
+                <h3 className="font-bold text-gray-900">AI 이야기 초안</h3>
+                <p className="text-sm text-gray-500 mt-1">인터뷰 기록을 가족 이야기로 정리하세요.</p>
+              </Link>
+              <Link href="/term-explainer" className="card border-amber-200 hover:shadow-md transition-all">
+                <div className="text-3xl mb-3">📚</div>
+                <h3 className="font-bold text-gray-900">AI 평남 용어 설명</h3>
+                <p className="text-sm text-gray-500 mt-1">어려운 역사·문화 용어를 쉽게 알아보세요.</p>
+              </Link>
+            </div>
+          </section>
+
           {/* 주요 섹션 */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             {/* 추천 미션 */}

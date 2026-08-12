@@ -38,6 +38,7 @@ export default function Navbar() {
     ? [
         { href: '/dashboard', label: '대시보드' },
         { href: '/missions', label: '미션' },
+        { href: '/ai-tools', label: '✨ AI 도구' },
         { href: '/archive', label: '아카이브' },
       ]
     : [

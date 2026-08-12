@@ -29,7 +29,17 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // 미인증 사용자 → 보호된 경로 접근 시 로그인으로
-  const protectedPaths = ['/dashboard', '/submit', '/profile', '/onboarding', '/admin']
+  const protectedPaths = [
+    '/dashboard',
+    '/submit',
+    '/profile',
+    '/onboarding',
+    '/admin',
+    '/ai-tools',
+    '/interview-helper',
+    '/story-generator',
+    '/term-explainer',
+  ]
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
   if (!user && isProtected) {
@@ -58,5 +68,9 @@ export const config = {
     '/profile/:path*',
     '/onboarding/:path*',
     '/admin/:path*',
+    '/ai-tools/:path*',
+    '/interview-helper/:path*',
+    '/story-generator/:path*',
+    '/term-explainer/:path*',
   ],
 }
