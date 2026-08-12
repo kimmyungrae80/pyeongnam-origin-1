@@ -1,6 +1,10 @@
 -- 기존 프로젝트를 삭제하지 않고 평남 오리진에 필요한 객체를 생성합니다.
 -- 현재 운영 DB처럼 profiles만 일부 생성된 경우에도 사용할 수 있습니다.
 
+create table if not exists public.profiles (
+  id uuid references auth.users(id) on delete cascade primary key
+);
+
 alter table public.profiles add column if not exists name text;
 alter table public.profiles add column if not exists generation int;
 alter table public.profiles add column if not exists origin_region text;

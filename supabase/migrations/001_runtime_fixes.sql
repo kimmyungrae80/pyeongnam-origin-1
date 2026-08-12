@@ -92,7 +92,13 @@ begin
 end;
 $$;
 
-revoke all on function public.increment_points(uuid, int) from public, anon, authenticated;
+do $$
+begin
+  if to_regprocedure('public.increment_points(uuid,integer)') is not null then
+    execute 'revoke all on function public.increment_points(uuid, int) from public, anon, authenticated';
+  end if;
+end
+$$;
 revoke all on function public.approve_submission(uuid) from public, anon;
 revoke all on function public.reject_submission(uuid) from public, anon;
 grant execute on function public.approve_submission(uuid) to authenticated;
