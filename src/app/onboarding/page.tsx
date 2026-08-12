@@ -31,13 +31,36 @@ export default function OnboardingPage() {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/auth')
+        router.replace('/auth')
         return
       }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, generation, origin_region, track, onboarding_completed')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (profileError) {
+        setError('회원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+        return
+      }
+
+      if (profile?.onboarding_completed) {
+        router.replace('/dashboard')
+        return
+      }
+
       setUser(user)
+      setForm({
+        name: profile?.name ?? user.user_metadata.name ?? '',
+        generation: (profile?.generation as Generation | null) ?? '',
+        origin_region: profile?.origin_region ?? '',
+        track: (profile?.track as Track | null) ?? '',
+      })
     }
     getUser()
-  }, [supabase.auth, router])
+  }, [supabase, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -65,18 +88,25 @@ export default function OnboardingPage() {
         return
       }
 
-      const { error: updateError } = await supabase.from('profiles').update({
-        name: form.name,
-        generation: Number(form.generation),
-        origin_region: form.origin_region,
-        track: form.track,
-        onboarding_completed: true,
-      }).eq('id', user.id)
+      const { data: updatedProfile, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          name: form.name,
+          generation: Number(form.generation),
+          origin_region: form.origin_region,
+          track: form.track,
+          onboarding_completed: true,
+        })
+        .eq('id', user.id)
+        .select('id, onboarding_completed')
+        .single()
 
       if (updateError) throw updateError
+      if (!updatedProfile.onboarding_completed) throw new Error('온보딩 완료 상태를 저장하지 못했습니다.')
 
       // 대시보드로 이동
-      router.push('/dashboard')
+      router.replace('/dashboard')
+      router.refresh()
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '저장 중 오류가 발생했습니다.'
       setError(message)

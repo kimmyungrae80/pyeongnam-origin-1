@@ -5,18 +5,29 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
   const next = url.searchParams.get('next')
-  const destination = next?.startsWith('/') && !next.startsWith('//') ? next : '/onboarding'
 
   if (!code) {
     return NextResponse.redirect(new URL('/auth?error=missing_code', url.origin))
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
     return NextResponse.redirect(new URL('/auth?error=callback_failed', url.origin))
   }
 
-  return NextResponse.redirect(new URL(destination, url.origin))
+  let destination = next?.startsWith('/') && !next.startsWith('//') ? next : null
+
+  if (!destination && data.user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', data.user.id)
+      .maybeSingle()
+
+    destination = profile?.onboarding_completed ? '/dashboard' : '/onboarding'
+  }
+
+  return NextResponse.redirect(new URL(destination ?? '/onboarding', url.origin))
 }

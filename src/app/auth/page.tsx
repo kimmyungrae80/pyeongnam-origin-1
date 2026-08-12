@@ -104,15 +104,24 @@ function AuthForm() {
     }
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError, data } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       })
 
       if (signInError) throw signInError
 
-      // 로그인 성공 - 대시보드로 이동
-      router.push('/dashboard')
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (profileError) throw profileError
+
+      // 기존 회원은 대시보드로, 아직 설정하지 않은 회원만 온보딩으로 이동합니다.
+      router.replace(profile?.onboarding_completed ? '/dashboard' : '/onboarding')
+      router.refresh()
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '로그인 중 오류가 발생했습니다.'
       setError(message)
