@@ -2,6 +2,7 @@
 // P1 - 랜딩 페이지
 
 import Link from 'next/link'
+import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import { CharacterMascot } from '@/components/Character'
 import { createClient } from '@/lib/supabase/server'
@@ -61,6 +62,18 @@ export default async function HomePage() {
         {/* 히어로 섹션 */}
         <section className="bg-gradient-to-br from-purple-50 via-white to-teal-50 px-4 py-12 text-center">
           <div className="max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-3 mb-5 text-sm font-semibold text-gray-600">
+              <Image
+                src="/brand/pyeongnam-logo.png"
+                alt="평안남도 로고"
+                width={54}
+                height={52}
+                priority
+                className="w-14 h-14 object-contain"
+              />
+              <span>평안남도 뿌리이음 플랫폼</span>
+            </div>
+
             {/* 마스코트 캐릭터 */}
             <div className="mb-6">
               <CharacterMascot className="w-32 h-32 mx-auto" />

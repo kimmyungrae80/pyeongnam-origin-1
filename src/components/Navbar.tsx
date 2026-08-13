@@ -3,6 +3,7 @@
 // src/components/Navbar.tsx
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -52,9 +53,14 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* 로고 */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-purple-700 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xs font-bold">평</span>
-          </div>
+          <Image
+            src="/brand/pyeongnam-logo.png"
+            alt="평안남도 로고"
+            width={40}
+            height={39}
+            priority
+            className="w-10 h-10 object-contain"
+          />
           <span className="font-medium text-gray-900">
             평남 오리진
             <span className="text-purple-700 ml-1">·</span>
